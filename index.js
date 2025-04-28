@@ -6,9 +6,7 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
-const authRoutes = require("./src/routes/auth");
-
-const todoRoutes = require("./src/routes/todoRoutes");
+const globalRoutes = require("./src/routes/index");
 
 const cors = require("cors");
 
@@ -21,8 +19,7 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/api", authRoutes);
-app.use("/api/todo", todoRoutes);
+app.use("/api", globalRoutes);
 
 app.listen(8000, () => {
   console.log("Server is listening on Port 8000");

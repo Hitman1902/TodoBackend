@@ -1,14 +1,17 @@
 const pool = require("../config/db");
 
+const {
+  createTask,
+  updateTask,
+  getTaskByUser,
+  deleteTask,
+} = require("../models/todo.model");
+
 const addTodo = async (req, res) => {
   const { title, description, status } = req.body;
   const userId = req.user.id;
-  console.log("The userId is coming or not: ", userId);
   try {
-    const result = await pool.query(
-      "INSERT INTO todo (user_id, title, description, status) VALUES ($1, $2, $3, $4) RETURNING *",
-      [userId, title, description, status]
-    );
+    const result = await createTask(title, description, status, userId);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.log(error);
@@ -22,10 +25,7 @@ const updateTodo = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const result = await pool.query(
-      "UPDATE todo SET title=$1, description=$2, status=$3 WHERE id=$4 AND user_id=$5 RETURNING *",
-      [title, description, status, todoId, userId]
-    );
+    const result = await updateTask(title, description, status, todoId, userId);
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Todo not found or authorized" });
     }
@@ -38,10 +38,7 @@ const updateTodo = async (req, res) => {
 const getTask = async (req, res) => {
   const userId = req.user.id;
   try {
-    const result = await pool.query(
-      `SELECT id,title,status,description from todo WHERE user_id = $1`,
-      [userId]
-    );
+    const result = await getTaskByUser(userId);
     const tasks = result.rows;
     console.log("The fetching Tasks: ", tasks);
     const structuredTasks = {
@@ -66,10 +63,7 @@ const deleteTask = async (req, res) => {
   const taskId = req.params.id;
   const userId = req.user.id;
   try {
-    const result = await pool.query(
-      "DELETE FROM todo WHERE id=$1 and user_id = $2 RETURNING * ",
-      [taskId, userId]
-    );
+    const result = await deleteTask(taskId, userId);
     if (result.rowCount === 0) {
       res.status(404).json({ error: "Task not Found " });
     }

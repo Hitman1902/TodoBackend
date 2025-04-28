@@ -11,8 +11,17 @@ const {
 
 const authenticateToken = require("../middleware/authMiddleware");
 
-router.post("/add", authenticateToken, addTodo);
-router.put("/update/:id", authenticateToken, updateTodo);
-router.get("/getTask", authenticateToken, getTask);
-router.delete("/deleteTask/:id", authenticateToken, deleteTask);
+const { todoSchema } = require("../validators/todo.validators");
+
+const validateRequest = require("../middleware/validateRequest");
+
+router.post("/add", authenticateToken, validateRequest(todoSchema), addTodo);
+router.put("/:id", authenticateToken, validateRequest(todoSchema), updateTodo);
+router.get("/getTask", authenticateToken, validateRequest(todoSchema), getTask);
+router.delete(
+  "/:id",
+  authenticateToken,
+  validateRequest(todoSchema),
+  deleteTask
+);
 module.exports = router;
