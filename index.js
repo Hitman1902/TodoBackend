@@ -8,6 +8,8 @@ const app = express();
 
 const authRoutes = require("./src/routes/auth");
 
+const sequelize = require("./src/config/db");
+
 const todoRoutes = require("./src/routes/todoRoutes");
 
 const cors = require("cors");
@@ -24,6 +26,8 @@ app.use(cookieParser());
 app.use("/api", authRoutes);
 app.use("/api/todo", todoRoutes);
 
-app.listen(8000, () => {
-  console.log("Server is listening on Port 8000");
+sequelize.sync().then(() => {
+  app.listen(8000, () => {
+    console.log("Server is listening on Port 8000");
+  });
 });

@@ -1,17 +1,12 @@
-const pool = require("../config/db");
+const Todo = require("../models/todoModel");
 
 const addTodo = async (req, res) => {
-  const { title, description, status } = req.body;
-  const userId = req.user.id;
-  console.log("The userId is coming or not: ", userId);
   try {
-    const result = await pool.query(
-      "INSERT INTO todo (user_id, title, description, status) VALUES ($1, $2, $3, $4) RETURNING *",
-      [userId, title, description, status]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.log(error);
+    const { title, description, status } = req.body;
+    const user_id = req.user.id;
+    const todo = await Todo.create({ title, description, status, user_id });
+    res.status(201).json(todo);
+  } catch (err) {
     res.status(500).json({ error: "Failed to add todo" });
   }
 };
@@ -19,65 +14,36 @@ const addTodo = async (req, res) => {
 const updateTodo = async (req, res) => {
   const { title, description, status } = req.body;
   const todoId = req.params.id;
-  const userId = req.user.id;
-
+  const user_id = req.user.id;
   try {
-    const result = await pool.query(
-      "UPDATE todo SET title=$1, description=$2, status=$3 WHERE id=$4 AND user_id=$5 RETURNING *",
-      [title, description, status, todoId, userId]
+    const [updated] = await Todo.update(
+      { title, description, status },
+      { where: { id: todoId, user_id } }
     );
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Todo not found or authorized" });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "failed to updated the todo" });
+    if (!updated)
+      return res.status(404).json({ error: "Todo not found or unauthorized" });
+    const updatedTodo = await Todo.findByPk(todoId);
+    res.json(updatedTodo);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update todo" });
   }
 };
 
 const getTask = async (req, res) => {
-  const userId = req.user.id;
+  const user_id = req.user.id;
   try {
-    const result = await pool.query(
-      `SELECT id,title,status,description from todo WHERE user_id = $1`,
-      [userId]
-    );
-    const tasks = result.rows;
-    console.log("The fetching Tasks: ", tasks);
+    const tasks = await Todo.findAll({ where: { user_id } });
     const structuredTasks = {
       todo: [],
       in_progress: [],
       pending: [],
       complete: [],
     };
-
-    tasks.forEach((task) => {
-      structuredTasks[task.status].push(task);
-    });
-    console.log("The structure tasks is: ", structuredTasks);
+    tasks.forEach((task) => structuredTasks[task.status].push(task));
     res.json(structuredTasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch tasks" });
   }
 };
 
-const deleteTask = async (req, res) => {
-  const taskId = req.params.id;
-  const userId = req.user.id;
-  try {
-    const result = await pool.query(
-      "DELETE FROM todo WHERE id=$1 and user_id = $2 RETURNING * ",
-      [taskId, userId]
-    );
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: "Task not Found " });
-    }
-    res.status(200).json({ message: "Task has been Deleted Successfully" });
-  } catch (error) {
-    console.log("Error message is ", error);
-    res.status(500).json({ message: "Server error " });
-  }
-};
-
-module.exports = { addTodo, updateTodo, getTask, deleteTask };
+module.exports = { addTodo, updateTodo, getTask };
