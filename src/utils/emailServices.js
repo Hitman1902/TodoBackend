@@ -1,7 +1,7 @@
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -12,9 +12,8 @@ const sendOTPEmail = (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: "Password change OTP",
-    text: "YOUR OTP FOR RESETTING PASSWORD IS: ",
-    otp,
+    subject: 'Password change OTP',
+    text: `YOUR OTP FOR RESETTING PASSWORD IS: ${otp}`,
   };
 
   return new Promise((resolve, reject) => {
